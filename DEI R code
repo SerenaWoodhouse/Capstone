@@ -1,0 +1,85 @@
+library(readr)
+DEI <- read_csv("C:/Users/seren/Downloads/DEI Survey_Sanitized.csv")
+df <- read_csv("C:/Users/seren/Downloads/DEI Survey_Sanitized.csv")
+#take out the question row and save as DEI_q
+DEI_q <- DEI[1,]
+DEI <- DEI[-1,]
+View(DEI)
+
+#take out last two blank rows
+n<-dim(DEI)[1]
+DEI<-DEI[1:(n-2),]
+
+
+#create a binary Minority variable excluding gender (Q14) becuase it was split evenly on all issues.
+library(dplyr)
+DEI <- DEI %>%
+  mutate(Minority = case_when(#Q14 == 'Minority'
+    Q15 == 'Minority' | Q16 == 'Minority' | Q18 == 'Minority' | Q20 == 'Minority' ~ 'Minority'))
+DEI$Minority <- DEI$Minority %>%
+  replace_na('Majority')
+
+
+#Create separate variables for sources of discrim
+library(stringr)
+library(tidyr)
+DEI <- DEI %>%
+  mutate(Faculty_Discrim = ifelse(str_detect(DEI$Q9,"Faculty"),1,0)) %>%
+  mutate(Staff_Discrim = ifelse(str_detect(DEI$Q9,"Staff"),1,0)) %>%
+  mutate(Local_Discrim = ifelse(str_detect(DEI$Q9,"Local"),1,0)) %>%
+  mutate(Student_Discrim = ifelse(str_detect(DEI$Q9,"Student"),1,0)) %>%
+  mutate(No_Discrim = ifelse(str_detect(DEI$Q9,"None"),1,0))
+
+DEI$Faculty_Discrim <- DEI$Faculty_Discrim %>%
+replace_na(0)
+DEI$Staff_Discrim <- DEI$Staff_Discrim %>%
+  replace_na(0)
+DEI$Local_Discrim <- DEI$Local_Discrim %>%
+  replace_na(0)
+DEI$Student_Discrim <- DEI$Student_Discrim %>%
+  replace_na(0)
+DEI$No_Discrim <- DEI$No_Discrim %>%
+  replace_na(0)
+
+#Create separate variables for locations of discrimination
+DEI <- DEI %>%
+  mutate(loc_Office = ifelse(str_detect(DEI$Q8,"office"),1,0)) %>%
+  mutate(loc_Other = ifelse(str_detect(DEI$Q8,"other"),1,0)) %>%
+  mutate(loc_None = ifelse(str_detect(DEI$Q8,"No discrimination"),1,0)) %>%
+  mutate(loc_internet = ifelse(str_detect(DEI$Q8,"internet"),1,0)) %>%
+  mutate(loc_Class = ifelse(str_detect(DEI$Q8,"classroom"),1,0)) %>%
+  mutate(loc_Event = ifelse(str_detect(DEI$Q8,"event"),1,0)) %>%
+  mutate(loc_off_campus = ifelse(str_detect(DEI$Q8,"office"),1,0))
+  
+DEI$loc_Office <- DEI$loc_Office %>%
+  replace_na(0)
+DEI$loc_Other <- DEI$loc_Other %>%
+  replace_na(0)
+DEI$loc_None <- DEI$loc_None %>%
+  replace_na(0)
+DEI$loc_internet <- DEI$loc_internet %>%
+  replace_na(0)
+DEI$loc_Class <- DEI$loc_Class %>%
+  replace_na(0)
+DEI$loc_Event <- DEI$loc_Event %>%
+  replace_na(0)
+DEI$loc_off_campus <- DEI$loc_off_campus %>%
+  replace_na(0)
+
+#Convert Q3 questions to factors
+DEIQ3 <- DEI[,c("Q3_1","Q3_2", "Q3_4", "Q3_9","Minority")]
+DEIQ3 <- DEIQ3%>%mutate_if(is.character, as.factor)
+DEIQ3$Q3_1 <- factor(DEIQ3$Q3_1, levels=c('Strongly Disagree', 'Disagree', 'Neither', 'Agree', 'Strongly Agree'))
+DEIQ3$Q3_2 <- factor(DEIQ3$Q3_2, levels=c('Strongly Disagree', 'Disagree', 'Neither', 'Agree', 'Strongly Agree'))
+DEIQ3$Q3_4 <- factor(DEIQ3$Q3_4, levels=c('Strongly Disagree', 'Disagree', 'Neither', 'Agree', 'Strongly Agree'))
+DEIQ3$Q3_9 <- factor(DEIQ3$Q3_9, levels=c('Strongly Disagree', 'Disagree', 'Neither', 'Agree', 'Strongly Agree'))
+
+DEIQ2 <- DEI[,c("Q2_1","Q2_2", "Q2_3", "Q2_4","Minority")]
+DEIQ2 <- DEIQ2 %>% 
+  mutate(Minority = recode(Minority, 
+                    "Majority" = "0", 
+                    "Minority" = "1"))
+
+#write CSV
+write.csv(DEI, "DEI_vis.csv")
+write.csv(DEIQ2, "DEIQ2_vis.csv")  
